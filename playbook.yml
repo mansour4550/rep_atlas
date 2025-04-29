@@ -12,7 +12,6 @@
     atlas_user: "hadoopZetta"
     hbase_dir: "/opt/hbase-2.5.5-hadoop3"
     kafka_dir: "/opt/kafka_2.11-2.2.0"
-
   tasks:
     - name: Ensure hadoopZetta user exists
       user:
@@ -37,6 +36,9 @@
 - name: Start HBase on master1
   hosts: master1
   become: yes
+  vars:
+    atlas_user: "hadoopZetta"
+    hbase_dir: "/opt/hbase-2.5.5-hadoop3"
   tasks:
     - name: Check if HBase is already installed
       stat:
@@ -69,6 +71,10 @@
 - name: Configure and start Solr on slave2 and edge1
   hosts: slave2,edge1
   become: yes
+  vars:
+    atlas_user: "hadoopZetta"
+    solr_install_dir: "/opt/solr-8.11.2"
+    zookeeper_quorum: "192.168.22.10:2181,192.168.22.11:2181,192.168.22.16:2181"
   tasks:
     - name: Check if Solr is already installed
       stat:
@@ -105,6 +111,10 @@
 - name: Configure and start Kafka on slave2
   hosts: slave2
   become: yes
+  vars:
+    atlas_user: "hadoopZetta"
+    kafka_dir: "/opt/kafka_2.11-2.2.0"
+    kafka_broker: "192.168.22.14:9092"
   tasks:
     - name: Check if Kafka is already installed
       stat:
@@ -162,9 +172,19 @@
       register: kafka_topics
       failed_when: kafka_topics.rc != 0 and "'already exists' not in kafka_topics.stderr"
 
+  handlers:
+    - name: restart kafka
+      become_user: "{{ atlas_user }}"
+      command: "{{ kafka_dir }}/bin/kafka-server-stop.sh && sleep 5 && {{ kafka_dir }}/bin/kafka-server-start.sh -daemon {{ kafka_dir }}/config/server.properties"
+      when: kafka_installed.stat.exists
+
 - name: Install and configure Atlas on master nodes
   hosts: master1,master2
   become: yes
+  vars:
+    atlas_version: "2.4.0"
+    atlas_install_dir: "/opt/apache-atlas-{{ atlas_version }}"
+    atlas_user: "hadoopZetta"
   tasks:
     - name: Check if Atlas is already installed
       stat:
@@ -247,9 +267,3 @@
       poll: 0
       register: atlas_start
       failed_when: atlas_start.rc != 0 and "'already running' not in atlas_start.stderr"
-
-  handlers:
-    - name: restart kafka
-      become_user: "{{ atlas_user }}"
-      command: "{{ kafka_dir }}/bin/kafka-server-stop.sh && sleep 5 && {{ kafka_dir }}/bin/kafka-server-start.sh -daemon {{ kafka_dir }}/config/server.properties"
-      when: kafka_installed.stat.exists is defined and kafka_installed.stat.exists

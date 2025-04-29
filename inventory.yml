@@ -1,17 +1,17 @@
 [master1]
-192.168.10.110 ansible_user=admin
+192.168.10.110 ansible_user=u1
 
 [master2]
-192.168.10.111 ansible_user=admin
+192.168.10.111 ansible_user=u1
 
 [master3]
-192.168.10.112 ansible_user=admin
+192.168.10.112 ansible_user=u1
 
 [slave2]
-192.168.10.113 ansible_user=admin
+192.168.10.113 ansible_user=u1
 
 [edge1]
-192.168.10.115 ansible_user=admin
+192.168.10.115 ansible_user=u1
 
 [all:vars]
 ansible_python_interpreter=/usr/bin/python3
